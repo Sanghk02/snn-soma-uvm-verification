@@ -5,15 +5,35 @@
 ![Status](https://img.shields.io/badge/Status-Verified-success.svg)
 
 ## Overview
-This project demonstrates a cycle-accurate behavioral **Leaky Integrate-and-Fire (LIF) neuron model** for Spiking Neural Networks (SNN), rigorously verified using the **Universal Verification Methodology (UVM)** with functional coverage-driven testing. 
+This project verifies a behavioral **Leaky Integrate-and-Fire (LIF) neuron model** for Spiking Neural Networks (SNN), using the **Universal Verification Methodology (UVM)**.
 
-The verification environment is specifically designed to handle hardware timing behaviors such as SRAM read latency, clocking synchronization, and strict protocol handshaking.
+The verification environment focuses on:
+* Functional correctness of LIF dynamics
+* Correct timing alignment with 1-cycle SRAM read latency
+* Strict handshake protocol validation
+* Coverage-driven stimulus generation
 
 ## DUT (Device Under Test) Architecture
 The DUT is a behavioral model of an SNN Soma (LIF Neuron) array.
 * **Neuron Capacity**: 256 Neurons (4 Banks × 16 Words × 4 Neurons/Word).
-* **Data Width**: 16-bit signed potentials.
-* **Core Logic**: Updates membrane potentials based on programmable `threshold` and `leakage_factor`. Emits spikes when potentials exceed the threshold.
+* **Data Width**: 16-bit signed membrane potentials.
+* **Configurable parameters**: 
+  * `threshold`
+  * `leakage_factor`
+
+## LIF Behavior
+Spike condition:
+```text
+V > threshold
+```
+Leakage behavior (arithmetic shift):
+```text
+V_new = V - (V >>> leakage_factor)
+```
+If a spike occurs:
+``
+V_new = 0
+``
 
 ## UVM Testbench Architecture
 The UVM testbench follows standard layered architecture:
@@ -46,7 +66,7 @@ A comprehensive hybrid sequence (`soma_base_seq`) is utilized to drive the stimu
 1. **Configuration Sweep**: Initializes threshold and leakage factor.
 2. **Directed Tests (Corner Cases)**: Generates maximum positive potentials (`32767`) to force 256 simultaneous spikes.
    * Generates negative potentials (`-32768`) to verify signed arithmetic extension.
-3. **CRV (Constrained Random Verification)**: Randomly injects potentials specifically weighted around the edge of the threshold ($V = Thresh-1, Thresh, Thresh+1$) and tests leakage extremes (0 to 15).
+3. **CRV (Constrained Random Verification)**: Randomly injects potentials specifically weighted around the edge of the threshold ($V = Thresh-1, Thresh, Thresh+1$) and tests leakage extremes (`0` to `15`).
 
 ## Advanced UVM Techniques Applied
 1. **Clocking Blocks & Race Condition Prevention**: Eliminated delta-cycle race conditions between the DUT and TB by strictly driving and sampling through `clocking blocks` (`vif.cb`) with explicit setup/hold times.
@@ -77,5 +97,6 @@ A comprehensive hybrid sequence (`soma_base_seq`) is utilized to drive the stimu
 2. Ensure rtl/soma_hw_module.sv is included in the compile path.
 3. Compile and run `tb/testbench.sv`.
 4. Run the simulation with the argument: `+UVM_TESTNAME=soma_test`.
+
 
 
