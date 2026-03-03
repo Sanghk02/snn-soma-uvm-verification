@@ -51,7 +51,7 @@ Test (soma_test)
       
 * **Sequence (`soma_base_seq`)**: Generates configuration, directed corner cases, and constrained-random stimulus.
 * **Driver (`soma_driver`)**:
-  Drives transactions through clocking blocks and enforces handshake protocol (`busy`, `done`). Includes timeout protection   to prevent simulation deadlock.
+    Drives transactions through clocking blocks and enforces handshake protocol (`busy`, `done`). Includes timeout protection   to prevent simulation deadlock.
 * **Monitor (`soma_monitor`)**: Utilizes **Pipeline Capture Logic** to accurately sample delayed memory read data (1-cycle SRAM latency), perfectly synchronized with the clocking block.
 * **Scoreboard (`soma_scoreboard`)**: Features cycle-accurate predictive modeling.
   * Independent error tracking for `Spike` pattern mismatches and `Potential` value mismatches.
@@ -95,6 +95,7 @@ A comprehensive hybrid sequence (`soma_base_seq`) is utilized to drive the stimu
 2. Ensure rtl/soma_hw_module.sv is included in the compile path.
 3. Compile and run `tb/testbench.sv`.
 4. Run the simulation with the argument: `+UVM_TESTNAME=soma_test`.
+
 
 
 
