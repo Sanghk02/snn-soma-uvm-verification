@@ -31,29 +31,27 @@ Leakage behavior (arithmetic shift):
 V_new = V - (V >>> leakage_factor)
 ```
 If a spike occurs:
-``
+```text
 V_new = 0
-``
+```
 
 ## UVM Testbench Architecture
-The UVM testbench follows standard layered architecture:
+The testbench follows standard layered UVM architecture:
 
 ```text
-Test
- └── Environment
-      ├── Agent
-      │    ├── Driver
-      │    ├── Monitor
-      │    └── Sequencer
-      ├── Scoreboard
-      └── Coverage
+Test (soma_test)
+ └── Environment (soma_env)
+      ├── Agent (soma_agent)
+      │    ├── Driver (soma_driver)
+      │    ├── Monitor (soma_monitor)
+      │    └── Sequencer (uvm_sequencer)
+      ├── Scoreboard (soma_scoreboard)
+      └── Coverage (soma_coverage)
 ```
       
-* **Sequence (`soma_base_seq`)**: A hybrid stimulus generator executing:
-  * **Configuration**: Initial setup of registers.
-  * **Directed Tests**: Corner case targeting (All-Spike, All-Negative potentials).
-  * **CRV (Constrained Random Verification)**: Randomized valid parameters for broad state-space exploration.
-* **Driver (`soma_driver`)**: Implements strict hardware handshake protocols (`busy`, `done`). Includes a **Watchdog (Timeout) mechanism** to prevent simulation deadlocks during hardware hangs.
+* **Sequence (`soma_base_seq`)**: Generates configuration, directed corner cases, and constrained-random stimulus.
+* **Driver (`soma_driver`)**:
+  Drives transactions through clocking blocks and enforces handshake protocol (`busy`, `done`). Includes timeout protection   to prevent simulation deadlock.
 * **Monitor (`soma_monitor`)**: Utilizes **Pipeline Capture Logic** to accurately sample delayed memory read data (1-cycle SRAM latency), perfectly synchronized with the clocking block.
 * **Scoreboard (`soma_scoreboard`)**: Features cycle-accurate predictive modeling.
   * Independent error tracking for `Spike` pattern mismatches and `Potential` value mismatches.
@@ -97,6 +95,7 @@ A comprehensive hybrid sequence (`soma_base_seq`) is utilized to drive the stimu
 2. Ensure rtl/soma_hw_module.sv is included in the compile path.
 3. Compile and run `tb/testbench.sv`.
 4. Run the simulation with the argument: `+UVM_TESTNAME=soma_test`.
+
 
 
 
