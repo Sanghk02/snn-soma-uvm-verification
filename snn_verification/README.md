@@ -70,9 +70,8 @@ A hybrid stimulus strategy is applied:
 This approach ensures both deterministic edge-case validation and broad state-space exploration.
 
 ## Key Verification Techniques
-1. **Clocking Blocks**  
-   Prevent race conditions between DUT and testbench.
-2. **Cycle-Aligned Pipeline Monitoring**: Accurately captures 1-cycle delayed SRAM read data.
+1. **Clocking Blocks**: Prevents race conditions between the DUT and testbench by synchronizing signal driving and sampling.
+2. **Cycle-Aligned Pipeline Monitoring**: Accurately captures 1-cycle delayed SRAM read data, mirroring hardware latency.
 3. **Handshake Timeout Protection**: Detects DUT hangs during the `busy`/`done` handshake protocol.
 4. **Orphan Transaction Check**: Scoreboard check_phase ensures no expected transactions remain unverified.
 5. **Cross Coverage per Neuron**: Ensures each neuron experiences:
@@ -93,13 +92,14 @@ This approach ensures both deterministic edge-case validation and broad state-sp
 ├── tb/
 │   └── testbench.sv         # UVM Testbench (Env, Agent, Sequencer, etc.)
 ├── README.md                
-└── Vplan.md                 # Verification Plan 
+└── vplan.md                 # Verification Plan 
 ```
 ## How to Run
 1. Include the UVM 1.2 library in your simulator (VCS, Xcelium, Questa, or EDA Playground).
 2. Ensure `rtl/soma_hw_module.sv` is included in the compile path.
 3. Compile and run `tb/testbench.sv`.
 4. Run the simulation with the argument: `+UVM_TESTNAME=soma_test`.
+
 
 
 
