@@ -18,6 +18,7 @@ The DUT is a behavioral model of an SNN Soma (LIF Neuron) array.
 ## UVM Testbench Architecture
 The UVM testbench follows standard layered architecture:
 
+```text
 Test
  └── Environment
       ├── Agent
@@ -26,6 +27,7 @@ Test
       │    └── Sequencer
       ├── Scoreboard
       └── Coverage
+```
       
 * **Sequence (`soma_base_seq`)**: A hybrid stimulus generator executing:
   * **Configuration**: Initial setup of registers.
@@ -58,4 +60,5 @@ Test
 │   └── testbench.sv         # UVM Testbench (Env, Agent, Sequencer, etc.)
 ├── Vplan.md                # Verification Plan
 └── README.md
+
 
