@@ -59,23 +59,29 @@ Drives transactions through clocking blocks and enforces handshake protocol (`bu
 Reports mismatches with exact neuron index and expected/actual values and performs orphan transaction checks in the `check_phase` to prevent false positive results.
 * **Coverage (`soma_coverage`)**: Contains comprehensive `covergroup` and `cross` coverage models aligned with the Verification Plan (V-Plan).
 
-## Verification Strategy & Scenarios
-A comprehensive hybrid sequence (`soma_base_seq`) is utilized to drive the stimulus, executing the following phases consecutively to achieve 100% functional coverage:
-1. **Configuration Sweep**: Initializes threshold and leakage factor.
-2. **Directed Tests (Corner Cases)**: Generates maximum positive potentials (`32767`) to force 256 simultaneous spikes.
-   * Generates negative potentials (`-32768`) to verify signed arithmetic extension.
-3. **CRV (Constrained Random Verification)**: Randomly injects potentials specifically weighted around the edge of the threshold ($V = Thresh-1, Thresh, Thresh+1$) and tests leakage extremes (`0` to `15`).
+## Verification Strategy
+A hybrid stimulus strategy is applied:
+1. **Configuration Sweep**: Systematic variation of:
+   * `threshold`
+   * `leakage_factor`
+2. **Directed Tests (Corner Cases)**:
+   * All-spike condition (`32767`)
+   * All-negative potentials (`-32768`) 
+3. **Constrained Random Verification (CRV)**: Randomized membrane potentials with weighted distribution near threshold boundaries ($V = Thresh-1, Thresh, Thresh+1$) and leakage extremes (`0` to `15`).
 
-## Advanced UVM Techniques Applied
-1. **Clocking Blocks & Race Condition Prevention**: Eliminated delta-cycle race conditions between the DUT and TB by strictly driving and sampling through `clocking blocks` (`vif.cb`) with explicit setup/hold times.
-2. **Pipeline Capture Monitor**: Implements a 1-clock delayed pipeline register array in the Monitor to accurately sample delayed memory read data, mirroring 1-cycle SRAM read latency.
-3. **Deep Copy Object Management**: Prevented object reference overwriting in the Scoreboard by utilizing UVM `create` for independent expected data queues.
-4. **Precise Error Tracking**: The Scoreboard features independent error tracking for `Spike` pattern mismatches and `Potential` value mismatches, capturing the exact `neuron_idx`, `expected_value`, and `actual_value`.
-5. **Hardware Timeout**: The Driver features a 2,000-cycle timeout limit during protocol handshakes (`busy`, `done`) to prevent simulation deadlocks in case of DUT hangs.
-6. **Orphan Transaction Check**: Utilizes the UVM `check_phase` in the Scoreboard to detect any remaining expected items in the queue, ensuring no data loss occurs at the end of the simulation.
-7. **Drain Time Utilization**: Clean simulation termination utilizing UVM's native `set_drain_time` instead of hardcoded `#` delays.
-8. **Automated Waveform Dumping**: Configured to automatically generate `dump.vcd` for post-simulation timing analysis.
+This approach ensures both deterministic edge-case validation and broad state-space exploration.
 
+## Key Verification Techniques
+1. **Clocking Blocks** Prevent race conditions between DUT and testbench.
+2. **Cycle-Aligned Pipeline Monitoring**: Accurately captures 1-cycle delayed SRAM read data.
+3. **Handshake Timeout Protection**: Detects DUT hangs during busy/done protocol.
+4. **Orphan Transaction Check**: Scoreboard check_phase ensures no expected transactions remain unverified.
+5. **Cross Coverage per Neuron**: Ensures each neuron experiences:
+   * Spike and No-Spike states
+   * Positive and Negative potentials
+
+## Coverage Model
+Functional coverage includes:
 ## Verification Results
 * **Functional Coverage**: `100.00%`
   * Successfully covered all 256 neurons experiencing both Spike/No-Spike states, and positive/negative potentials across varied thresholds and leakage factors.
@@ -87,14 +93,15 @@ A comprehensive hybrid sequence (`soma_base_seq`) is utilized to drive the stimu
 │   └── soma_hw_module.sv    # DUT: LIF Neuron Behavioral Model
 ├── tb/
 │   └── testbench.sv         # UVM Testbench (Env, Agent, Sequencer, etc.)
-├── Vplan.md                # Verification Plan
-└── README.md
+├── README.md                
+└── Soma_Vplan.md                 # Verification Plan 
 ```
 ## How to Run
 1. Include the UVM 1.2 library in your simulator (VCS, Xcelium, Questa, or EDA Playground).
 2. Ensure rtl/soma_hw_module.sv is included in the compile path.
 3. Compile and run `tb/testbench.sv`.
 4. Run the simulation with the argument: `+UVM_TESTNAME=soma_test`.
+
 
 
 
