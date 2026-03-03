@@ -43,8 +43,9 @@ The testbench is built with a standard UVM hierarchy, emphasizing robust timing 
 
 ## Repository Structure
 ```text
-├── src/
+├── rtl/
 │   └── soma_hw_module.sv    # DUT: LIF Neuron Behavioral Model
 ├── tb/
 │   └── testbench.sv         # UVM Testbench (Env, Agent, Sequencer, etc.)
-└── README.md
+├── README.md                # Verification Plan
+└── Vplan.md
