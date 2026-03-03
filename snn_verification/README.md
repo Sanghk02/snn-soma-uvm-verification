@@ -51,13 +51,13 @@ Test (soma_test)
       
 * **Sequence (`soma_base_seq`)**: Generates configuration, directed corner cases, and constrained-random stimulus.
 * **Driver (`soma_driver`)**:
-    Drives transactions through clocking blocks and enforces handshake protocol (`busy`, `done`). Includes timeout protection   to prevent simulation deadlock.
-* **Monitor (`soma_monitor`)**: Utilizes **Pipeline Capture Logic** to accurately sample delayed memory read data (1-cycle SRAM latency), perfectly synchronized with the clocking block.
-* **Scoreboard (`soma_scoreboard`)**: Features cycle-accurate predictive modeling.
-  * Independent error tracking for `Spike` pattern mismatches and `Potential` value mismatches.
-  * Captures the exact `neuron_idx`, `expected_value`, and `actual_value` for rapid debugging.
-  * Orphan transaction checks in the `check_phase` to detect data loss.
-* **Coverage (`soma_coverage`)**: 100% Functional Coverage achieved via targeted `covergroup` and `cross` coverage matching the V-Plan.
+Drives transactions through clocking blocks and enforces handshake protocol (`busy`, `done`). Includes timeout protection   to prevent simulation deadlock.
+* **Monitor (`soma_monitor`)**: Captures DUT behavior with cycle alignment. Implements a 1-cycle delayed pipeline model to match SRAM read latency.
+* **Scoreboard (`soma_scoreboard`)**: Implements a predictive LIF reference model and compares:
+  * Spike vectors
+  * Updated membrane potentials
+Reports mismatches with exact neuron index and expected/actual values and performs orphan transaction checks in the `check_phase` to prevent false positive results.
+* **Coverage (`soma_coverage`)**: Contains comprehensive `covergroup` and `cross` coverage models aligned with the Verification Plan (V-Plan).
 
 ## Verification Strategy & Scenarios
 A comprehensive hybrid sequence (`soma_base_seq`) is utilized to drive the stimulus, executing the following phases consecutively to achieve 100% functional coverage:
@@ -95,6 +95,7 @@ A comprehensive hybrid sequence (`soma_base_seq`) is utilized to drive the stimu
 2. Ensure rtl/soma_hw_module.sv is included in the compile path.
 3. Compile and run `tb/testbench.sv`.
 4. Run the simulation with the argument: `+UVM_TESTNAME=soma_test`.
+
 
 
 
