@@ -16,8 +16,17 @@ The DUT is a behavioral model of an SNN Soma (LIF Neuron) array.
 * **Core Logic**: Updates membrane potentials based on programmable `threshold` and `leakage_factor`. Emits spikes when potentials exceed the threshold.
 
 ## UVM Testbench Architecture
-The testbench is built with a standard UVM hierarchy, emphasizing robust timing control and comprehensive data tracking.
+The UVM testbench follows standard layered architecture:
 
+Test
+ └── Environment
+      ├── Agent
+      │    ├── Driver
+      │    ├── Monitor
+      │    └── Sequencer
+      ├── Scoreboard
+      └── Coverage
+      
 * **Sequence (`soma_base_seq`)**: A hybrid stimulus generator executing:
   * **Configuration**: Initial setup of registers.
   * **Directed Tests**: Corner case targeting (All-Spike, All-Negative potentials).
@@ -47,5 +56,6 @@ The testbench is built with a standard UVM hierarchy, emphasizing robust timing 
 │   └── soma_hw_module.sv    # DUT: LIF Neuron Behavioral Model
 ├── tb/
 │   └── testbench.sv         # UVM Testbench (Env, Agent, Sequencer, etc.)
-├── README.md                # Verification Plan
-└── Vplan.md
+├── Vplan.md                # Verification Plan
+└── README.md
+
