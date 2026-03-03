@@ -71,7 +71,7 @@ This approach ensures both deterministic edge-case validation and broad state-sp
 
 ## Key Verification Techniques
 1. **Clocking Blocks** 
-   Prevent race conditions between DUT and testbench.
+    Prevent race conditions between DUT and testbench.
 2. **Cycle-Aligned Pipeline Monitoring**: Accurately captures 1-cycle delayed SRAM read data.
 3. **Handshake Timeout Protection**: Detects DUT hangs during the `busy`/`done` handshake protocol.
 4. **Orphan Transaction Check**: Scoreboard check_phase ensures no expected transactions remain unverified.
@@ -100,6 +100,7 @@ This approach ensures both deterministic edge-case validation and broad state-sp
 2. Ensure `rtl/soma_hw_module.sv` is included in the compile path.
 3. Compile and run `tb/testbench.sv`.
 4. Run the simulation with the argument: `+UVM_TESTNAME=soma_test`.
+
 
 
 
