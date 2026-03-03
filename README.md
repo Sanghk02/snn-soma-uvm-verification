@@ -5,46 +5,113 @@
 ![Status](https://img.shields.io/badge/Status-Verified-success.svg)
 
 ## Overview
-This project demonstrates a cycle-accurate behavioral **Leaky Integrate-and-Fire (LIF) neuron model** for Spiking Neural Networks (SNN), rigorously verified using the **Universal Verification Methodology (UVM)** with functional coverage-driven testing. 
+This project verifies a behavioral **Leaky Integrate-and-Fire (LIF) neuron model** for Spiking Neural Networks (SNN), using the **Universal Verification Methodology (UVM)**.
 
-The verification environment is specifically designed to handle hardware timing behaviors such as SRAM read latency, clocking synchronization, and strict protocol handshaking.
+The verification environment focuses on:
+* Functional correctness of LIF dynamics
+* Correct timing alignment with 1-cycle SRAM read latency
+* Strict handshake protocol validation
+* Coverage-driven stimulus generation
 
 ## DUT (Device Under Test) Architecture
 The DUT is a behavioral model of an SNN Soma (LIF Neuron) array.
 * **Neuron Capacity**: 256 Neurons (4 Banks × 16 Words × 4 Neurons/Word).
-* **Data Width**: 16-bit signed potentials.
-* **Core Logic**: Updates membrane potentials based on programmable `threshold` and `leakage_factor`. Emits spikes when potentials exceed the threshold.
+* **Data Width**: 16-bit signed membrane potentials.
+* **Configurable parameters**: 
+  * `threshold`
+  * `leakage_factor`
+
+## LIF Behavior
+* **Spike condition**:
+  A spike is generated when ``V > threshold``.
+* **Potential Reset**:
+  If a spike occurs, the potential is reset: ``V_new = 0``.
+* **Leaky Integration**:
+  If no spike occurs, the leakage behavior is applied via arithmetic right shift (preserving the sign bit):
+  ``V_new = V - (V >>> leakage_factor)``
 
 ## UVM Testbench Architecture
-The testbench is built with a standard UVM hierarchy, emphasizing robust timing control and comprehensive data tracking.
+The testbench follows standard layered UVM architecture:
 
-* **Sequence (`soma_base_seq`)**: A hybrid stimulus generator executing:
-  * **Configuration**: Initial setup of registers.
-  * **Directed Tests**: Corner case targeting (All-Spike, All-Negative potentials).
-  * **CRV (Constrained Random Verification)**: Randomized valid parameters for broad state-space exploration.
-* **Driver (`soma_driver`)**: Implements strict hardware handshake protocols (`busy`, `done`). Includes a **Watchdog (Timeout) mechanism** to prevent simulation deadlocks during hardware hangs.
-* **Monitor (`soma_monitor`)**: Utilizes **Pipeline Capture Logic** to accurately sample delayed memory read data (1-cycle SRAM latency), perfectly synchronized with the clocking block.
-* **Scoreboard (`soma_scoreboard`)**: Features cycle-accurate predictive modeling.
-  * Independent error tracking for `Spike` pattern mismatches and `Potential` value mismatches.
-  * Captures the exact `neuron_idx`, `expected_value`, and `actual_value` for rapid debugging.
-  * Orphan transaction checks in the `check_phase` to detect data loss.
-* **Coverage (`soma_coverage`)**: 100% Functional Coverage achieved via targeted `covergroup` and `cross` coverage matching the V-Plan.
+```text
+Test (soma_test)
+ └── Environment (soma_env)
+      ├── Agent (soma_agent)
+      │    ├── Driver (soma_driver)
+      │    ├── Monitor (soma_monitor)
+      │    └── Sequencer (uvm_sequencer)
+      ├── Scoreboard (soma_scoreboard)
+      └── Coverage (soma_coverage)
+```
+      
+* **Sequence (`soma_base_seq`)**: Generates configuration, directed corner cases, and constrained-random stimulus.
+* **Driver (`soma_driver`)**:
+  Drives transactions through clocking blocks and enforces handshake protocol (`busy`, `done`). Includes timeout protection to prevent simulation deadlocks.
+* **Monitor (`soma_monitor`)**: Captures DUT behavior with cycle alignment. Implements a 1-cycle delayed pipeline model to match SRAM read latency.
+* **Scoreboard (`soma_scoreboard`)**: Implements a predictive LIF reference model and compares:
+  * Spike vectors
+  * Updated membrane potentials
+  Reports mismatches with exact neuron index and expected/actual values.  
+  Performs orphan transaction checks in the `check_phase` to prevent false positives.
+* **Coverage (`soma_coverage`)**: Contains comprehensive `covergroup` and `cross` coverage models aligned with the Verification Plan (V-Plan).
 
-## Advanced UVM Techniques Applied
-1. **Clocking Blocks & Race Condition Prevention**: Eliminated delta-cycle race conditions between the DUT and TB by strictly driving and sampling through `clocking blocks` (`vif.cb`) with explicit setup/hold times.
-2. **Deep Copy Object Management**: Prevented object reference overwriting in the Scoreboard by utilizing UVM `create` for independent expected data queues.
-3. **Drain Time Utilization**: Clean simulation termination utilizing UVM's native `set_drain_time` instead of hardcoded `#` delays.
-4. **Automated Waveform Dumping**: Configured to automatically generate `dump.vcd` for post-simulation timing analysis.
+## Verification Strategy
+A hybrid stimulus strategy is applied:
+1. **Configuration Sweep**: Systematic variation of:
+   * `threshold`
+   * `leakage_factor`
+2. **Directed Tests (Corner Cases)**:
+   * All-spike condition (`32767`)
+   * All-negative potentials (`-32768`) 
+3. **Constrained Random Verification (CRV)**:
+   Randomized membrane potentials with weighted distribution near threshold boundaries (`Thresh-1`, `Thresh`, `Thresh+1`)
+   and leakage extremes (`0` to `15`).
+
+This approach ensures both deterministic edge-case validation and broad state-space exploration.
+
+## Key Verification Techniques
+1. **Clocking Blocks**: Prevents race conditions between the DUT and testbench by synchronizing signal driving and sampling.
+2. **Cycle-Aligned Pipeline Monitoring**: Accurately captures 1-cycle delayed SRAM read data, mirroring hardware latency.
+3. **Handshake Timeout Protection**: Detects DUT hangs during the `busy`/`done` handshake protocol.
+4. **Orphan Transaction Check**: Scoreboard check_phase ensures no expected transactions remain unverified.
+5. **Cross Coverage per Neuron**: Ensures each neuron experiences:
+   * Spike and No-Spike states
+   * Positive and Negative potentials
 
 ## Verification Results
 * **Functional Coverage**: `100.00%`
-  * Successfully covered all 256 neurons experiencing both Spike/No-Spike states, and positive/negative potentials across varied thresholds and leakage factors.
+  * Successfully sampled all 256 neuron indices.
+  * Achieved 100% Cross Coverage for each neuron experiencing both Spike/No-Spike states.
+  * Achieved 100% Cross Coverage for each neuron experiencing both Positive/Negative potentials across varied configurations.
 * **Test Status**: PASSED (100% Functional Match, Zero dropped transactions).
 
 ## Repository Structure
 ```text
-├── src/
+├── rtl/
 │   └── soma_hw_module.sv    # DUT: LIF Neuron Behavioral Model
 ├── tb/
 │   └── testbench.sv         # UVM Testbench (Env, Agent, Sequencer, etc.)
-└── README.md
+├── README.md                
+└── vplan.md                 # Verification Plan 
+```
+## How to Run
+1. Include the UVM 1.2 library in your simulator (VCS, Xcelium, Questa, or EDA Playground).
+2. Ensure `rtl/soma_hw_module.sv` is included in the compile path.
+3. Compile and run `tb/testbench.sv`.
+4. Run the simulation with the argument: `+UVM_TESTNAME=soma_test`.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
